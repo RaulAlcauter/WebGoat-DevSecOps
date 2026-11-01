@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 public class VulnerableTaskHolder implements Serializable {
 
   private static final long serialVersionUID = 2;
-  private String AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
 
   private String taskName;
   private String taskAction;
