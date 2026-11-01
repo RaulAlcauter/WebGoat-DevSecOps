@@ -37,6 +37,14 @@ jobs:
         output_path: 'kics_results'
         output_formats: 'json'
         ignore_on_exit: results
+        
+    - name: Upload KICS report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kics-report
+        path: kics_results/
+        if-no-files-found: warn
 
     - name: SCA - Dependency Check
       run: |
