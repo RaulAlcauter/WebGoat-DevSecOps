@@ -18,7 +18,7 @@ jobs:
     - name: SAST
       run: |
         docker run --rm \
-            -v "$GITHUB_WORKSPACE:/src" \
+            -v "$GITHUB_WORKSPACE/src:/src" \
             -w /src \
             semgrep/semgrep \
             semgrep scan --config auto
