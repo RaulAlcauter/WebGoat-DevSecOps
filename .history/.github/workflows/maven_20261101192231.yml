@@ -1,0 +1,36 @@
+name: Maven DevSecOps CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - name: SAST
+      run: |
+        docker run --rm \
+            -v "$GITHUB_WORKSPACE/src:/src" \
+            -w /src \
+            semgrep/semgrep \
+            semgrep scan --config auto
+            
+    - name: Secret Scanning - TruffleHog
+      run: |
+          echo "Aquí ejecutaremos TruffleHog"
+
+    - name: IaC Scanning - KICS
+      run: |
+          echo "Aquí ejecutaremos KICS"
+
+    - name: SCA - Dependency Check
+      run: |
+          echo "Aquí ejecutaremos Dependency-Check"
