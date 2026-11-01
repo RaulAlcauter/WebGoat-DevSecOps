@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-    - name: SAST
+    - name: SAST - Semgrep
       run: |
         docker run --rm \
             -v "${{ github.workspace }}:/src" \
@@ -24,8 +24,7 @@ jobs:
             semgrep scan --config auto src/
             
     - name: Secret Scanning - TruffleHog
-      run: |
-          echo "Aquí ejecutaremos TruffleHog"
+      uses: trufflesecurity/trufflehog@v3.99.7
 
     - name: IaC Scanning - KICS
       run: |
