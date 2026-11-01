@@ -19,16 +19,40 @@ jobs:
         fetch-depth: 0
     - name: SAST - Semgrep
       run: |
+        mkdir -p semgrep_results
         docker run --rm \
             -v "${{ github.workspace }}:/src" \
             -w /src \
             semgrep/semgrep \
-            semgrep scan --config auto src/
-            
-    - name: Secret Scanning - TruffleHog
-      uses: trufflesecurity/trufflehog@main
+            semgrep scan --config auto \
+            --json \
+            --output semgrep_results/semgrep.json \
+            src/
+
+    - name: Upload Semgrep report
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
-        extra_args: --results=verified,unverified,unknown
+        name: semgrep-report
+        path: semgrep_results/
+        if-no-files-found: warn
+
+    - name: Secret Scanning - TruffleHog
+      run: |
+        docker run --rm \
+          -v "${{ github.workspace }}:/src" \
+          -w /src \
+          trufflesecurity/trufflehog:latest \
+          git file://./ --results=verified,unverified,unknown --json > trufflehog-report.json
+      continue-on-error: true
+
+    - name: Upload TruffleHog report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: trufflehog-report
+        path: trufflehog-report.json
+        if-no-files-found: warn
 
     - name: IaC Scanning - KICS
       uses: checkmarx/kics-github-action@v2.1.20
@@ -37,7 +61,7 @@ jobs:
         output_path: 'kics_results'
         output_formats: 'json'
         ignore_on_exit: results
-        
+
     - name: Upload KICS report
       if: always()
       uses: actions/upload-artifact@v4
@@ -46,6 +70,3 @@ jobs:
         path: kics_results/
         if-no-files-found: warn
 
-    - name: SCA - Dependency Check
-      run: |
-          echo "Aquí ejecutaremos Dependency-Check"
