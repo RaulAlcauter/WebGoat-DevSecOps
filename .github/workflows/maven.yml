@@ -18,10 +18,10 @@ jobs:
     - name: SAST
       run: |
         docker run --rm \
-            -v "$GITHUB_WORKSPACE/src:/src" \
+            -v "${{ github.workspace }}:/src" \
             -w /src \
             semgrep/semgrep \
-            semgrep scan --config auto
+            semgrep scan --config auto src/
             
     - name: Secret Scanning - TruffleHog
       run: |
