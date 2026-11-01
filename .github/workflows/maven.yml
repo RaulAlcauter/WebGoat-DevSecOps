@@ -31,8 +31,12 @@ jobs:
         extra_args: --results=verified,unverified,unknown
 
     - name: IaC Scanning - KICS
-      run: |
-          echo "Aquí ejecutaremos KICS"
+      uses: checkmarx/kics-github-action@v2.1.20
+      with:
+        path: 'Dockerfile'
+        output_path: 'kics_results'
+        output_formats: 'json'
+        ignore_on_exit: results
 
     - name: SCA - Dependency Check
       run: |
