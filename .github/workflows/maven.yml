@@ -95,7 +95,7 @@ jobs:
       with:
         project: 'WebGoat'
         path: '.'
-        format: 'json'
+        format: 'JSON'
 
     - name: Upload Dependency Check Results
       uses: actions/upload-artifact@v4
