@@ -18,6 +18,41 @@ jobs:
       uses: actions/checkout@v7
       with:
         fetch-depth: 0
+    
+    - name: Configure JDK 25
+      uses: actions/setup-java@v6.1.0
+      with:
+        distribution: temurin
+        java-version: '25'
+
+    - name: Cache Dependency-Check database
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository/org/owasp/dependency-check-data/
+        key: dependency-check-${{ runner.os }}-${{ github.run_id }}
+        restore-keys: |
+          dependency-check-${{ runner.os }}-
+
+    - name: SCA - OWASP Dependency-Check
+      env:
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      run: |
+        ./mvnw -B \
+          org.owasp:dependency-check-maven:13.0.0:check \
+          -Dformat=JSON \
+          -DprettyPrint=true \
+          -Dodc.outputDirectory=dependency-check-report \
+          -DfailBuildOnCVSS=11 \
+          -DnvdApiKeyEnvironmentVariable=NVD_API_KEY
+
+    - name: Upload Dependency-Check report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Dependency-Check Report
+        path: dependency-check-report/
+        if-no-files-found: warn
+
     - name: SAST - Semgrep
       run: |
         mkdir -p semgrep_results
@@ -87,24 +122,6 @@ jobs:
     - name: Build JAR
       run: |
         ./mvnw clean package -DskipTests -B
-
-    - name: Dependency Check
-      uses: dependency-check/Dependency-Check_Action@main
-      env:
-        JAVA_HOME: /opt/jdk
-      with:
-        project: 'WebGoat'
-        path: 'target'
-        format: 'JSON'
-        out: 'dependency-check-report'
-
-    - name: Upload Dependency Check Results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: Dependency Check Report
-        path: dependency-check-report/
-        if-no-files-found: warn
     
     - name: Build WebGoat image
       run: |
