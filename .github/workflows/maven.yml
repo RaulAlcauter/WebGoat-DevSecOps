@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -80,7 +77,6 @@ jobs:
           -w /src \
           trufflesecurity/trufflehog:latest \
           git file://./ --results=verified,unverified,unknown --json > trufflehog-report.json
-      continue-on-error: true
 
     - name: Upload TruffleHog report
       if: always()
@@ -108,7 +104,12 @@ jobs:
 
   build:
     name: Build
+    needs: preflight
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
     - name: Checkout
       uses: actions/checkout@v7
@@ -123,7 +124,22 @@ jobs:
       run: |
         ./mvnw clean package -DskipTests -B
     
-    - name: Build WebGoat image
+    - name: Build, and tag WebGoat image
       run: |
-        docker build -t webgoat:1.0 .
+        IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/webgoat-devsecops"
+        docker build -t "$IMAGE_NAME:$GITHUB_SHA" -t "$IMAGE_NAME:latest" .
+
+        echo "IMAGE_NAME=$IMAGE_NAME" >> "$GITHUB_ENV"
+    
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}  
+
+    - name: Push image to GHCR
+      run: |
+        docker push "$IMAGE_NAME:$GITHUB_SHA"
+        docker push "$IMAGE_NAME:latest"
 
