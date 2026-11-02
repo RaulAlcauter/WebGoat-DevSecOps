@@ -14,7 +14,8 @@ jobs:
     name: Preflight
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7
+    - name: Checkout
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - name: SAST - Semgrep
@@ -69,4 +70,25 @@ jobs:
         name: kics-report
         path: kics_results/
         if-no-files-found: warn
+
+  build:
+    name: Build
+    uses: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Configure JDK 25
+      uses: actions/setup-java@v6.1.0
+      with:
+        distribution: temurin
+        java-version: '25'
+
+    - name: Build JAR
+      run: |
+        ./mvnw clean package -DskipTests -B
+    
+    - name: Build WebGoat image
+      run: |
+        docker build -t webgoat:1.0 .
 
