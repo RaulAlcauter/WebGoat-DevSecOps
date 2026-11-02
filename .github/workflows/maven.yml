@@ -94,7 +94,7 @@ jobs:
         JAVA_HOME: /opt/jdk
       with:
         project: 'WebGoat'
-        path: '.'
+        path: 'target'
         format: 'JSON'
         out: 'dependency-check-report'
 
