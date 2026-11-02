@@ -1,0 +1,10 @@
+
+services:
+  webgoat:
+    image: ${WEBGOAT_IMAGE:?WEBGOAT_IMAGE must be set}
+    container_name: webgoat
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    restart: unless-stopped
