@@ -96,12 +96,15 @@ jobs:
         project: 'WebGoat'
         path: '.'
         format: 'JSON'
+        out: 'dependency-check-report'
 
     - name: Upload Dependency Check Results
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: Dependency Check Report
-        path: reports/  
+        path: dependency-check-report/
+        if-no-files-found: warn
     
     - name: Build WebGoat image
       run: |
