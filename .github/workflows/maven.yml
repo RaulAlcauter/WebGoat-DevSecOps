@@ -162,3 +162,65 @@ jobs:
     - name: Run WebGoat tests
       run: |
         ./mvnw test -B
+
+  security:
+    name: Security
+    needs: test
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull image
+      run: |
+        IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/webgoat-devsecops"
+        IMAGE_REF="$IMAGE_NAME:$GITHUB_SHA"
+
+        docker pull "$IMAGE_REF"
+
+        echo "IMAGE_REF=$IMAGE_REF" >> "$GITHUB_ENV"
+
+    - name: Image Scanning - Trivy
+      uses: aquasecurity/trivy-action@v0.36.0
+      with:
+        image-ref: ${{ env.IMAGE_REF }}
+        format: json
+        severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+        output: trivy-report.json
+        exit-code: '0'
+    
+    - name: Upload Trivy Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Trivy Report
+        path: trivy-report.json
+        if-no-files-found: warn
+    
+    - name: Run App Container
+      run: |
+        docker run -d --name appcontainer -p 127.0.0.1:8080:8080 "$IMAGE_REF"
+        sleep 20
+
+    - name: DAST - OWASP ZAP
+      uses: zaproxy/action-baseline@v0.15.0
+      with:
+        target: 'http://127.0.0.1:8080/WebGoat'
+        fail_action: false
+        allow_issue_writing: false
+        artifact_name: 'zap-report'
+
+    - name: Cleanup App
+      if: always()
+      run: |
+        docker logs appcontainer || true
+        docker rm -f appcontainer || true
